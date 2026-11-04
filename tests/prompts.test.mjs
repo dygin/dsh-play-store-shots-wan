@@ -44,3 +44,13 @@ test('no exaggerated claim words in generated copy', () => {
   const copy = [...SCREENS.flatMap((screen) => [screen.headline, screen.subline]), 'Short stories, anywhere'].join(' ')
   assert.doesNotMatch(copy, /\b(unlimited|infinite|best|#1|free forever|no ads|download|install)\b/i)
 })
+
+test('safe variant swaps in stricter cover guidance', async () => {
+  const { portraitPrompt: build } = await import('../lib/index.mjs')
+  const normal = build(SCREENS[0], 'Demo', palette)
+  const safe = build(SCREENS[0], 'Demo', palette, true)
+  assert.notEqual(normal, safe)
+  assert.match(safe, /fully clothed/i)
+  assert.match(safe, /no couples/i)
+  assert.doesNotMatch(normal, /no couples/i)
+})

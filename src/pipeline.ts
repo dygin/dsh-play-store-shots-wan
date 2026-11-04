@@ -11,7 +11,7 @@ import {
   portraitPrompt,
   type Palette,
 } from './prompts.ts'
-import { generateImage } from './wan.ts'
+import { WanError, generateImage, type ReferenceImage } from './wan.ts'
 
 export interface GenerateOptions {
   appName: string
@@ -34,11 +34,29 @@ export interface GeneratedFile {
   bytes: number
 }
 
+export interface BoardFailure {
+  name: string
+  message: string
+}
+
 export interface GenerateResult {
   directory: string
   sheet: string
   palette: Palette
   files: GeneratedFile[]
+  failures: BoardFailure[]
+}
+
+/** One of the five images, and everything needed to render it. */
+interface Board {
+  name: string
+  headline: string
+  size: string
+  target: { width: number; height: number }
+  prompt: string
+  safePrompt: string
+  references: ReferenceImage[]
+  safeReferences: ReferenceImage[]
 }
 
 export function slugify(appName: string): string {
@@ -50,9 +68,50 @@ export function slugify(appName: string): string {
   return slug || `app-${Date.now().toString(36)}`
 }
 
+function isModeration(caught: unknown): boolean {
+  const message = caught instanceof Error ? caught.message : String(caught)
+  return /DataInspectionFailed|Green net|inappropriate content/i.test(message)
+}
+
+/**
+ * Renders one board with a moderation ladder: Bailian inspects the *output*, so
+ * a drama-style cover can be refused even when nothing in the prompt is risky.
+ * The retry states the safe clause explicitly, and the last attempt drops the
+ * user's reference sheet, which is often what the inspector reacted to.
+ */
+async function renderBoard(board: Board, options: GenerateOptions, report: (message: string) => void): Promise<Buffer> {
+  const attempts = [
+    { prompt: board.prompt, references: board.references },
+    { prompt: board.safePrompt, references: board.references },
+    { prompt: board.safePrompt, references: board.safeReferences },
+  ]
+
+  let lastError: unknown
+  for (const [index, attempt] of attempts.entries()) {
+    try {
+      const raw = await generateImage({
+        baseUrl: options.baseUrl,
+        apiKey: options.apiKey,
+        model: options.model,
+        prompt: attempt.prompt,
+        references: attempt.references,
+        size: board.size,
+        signal: options.signal,
+      })
+      return await finalize(raw, board.target.width, board.target.height)
+    } catch (caught) {
+      lastError = caught
+      if (!isModeration(caught) || index === attempts.length - 1) break
+      report(`${board.name} 触发内容审核，换更保守的描述重试`)
+    }
+  }
+  throw lastError
+}
+
 /**
  * Normalise the three uploads, generate the five boards in parallel, then land
- * every board on the exact store pixel size before writing it.
+ * every board on the exact store pixel size before writing it. A board that is
+ * refused by moderation does not sink the rest of the set.
  */
 export async function generateStoreShots(options: GenerateOptions): Promise<GenerateResult> {
   const report = options.onProgress ?? (() => {})
@@ -67,46 +126,53 @@ export async function generateStoreShots(options: GenerateOptions): Promise<Gene
 
   const portraitReference = await prepareReference(options.portraitReference)
   const bannerReference = await prepareReference(options.bannerReference)
-  const iconReference = { mime: 'image/png', data: png }
+  const icon: ReferenceImage = { mime: 'image/png', data: png }
+  const portraitImages: ReferenceImage[] = [icon, { mime: 'image/jpeg', data: portraitReference }]
+  const bannerImages: ReferenceImage[] = [icon, { mime: 'image/jpeg', data: bannerReference }]
 
-  const portraitJobs = SCREENS.map(async (screen) => {
-    report(`生成竖图 ${screen.id} · ${screen.headline}`)
-    const raw = await generateImage({
-      baseUrl: options.baseUrl,
-      apiKey: options.apiKey,
-      model: options.model,
-      prompt: portraitPrompt(screen, options.appName, palette),
-      references: [iconReference, { mime: 'image/jpeg', data: portraitReference }],
+  const boards: Board[] = [
+    ...SCREENS.map((screen) => ({
+      name: `${screen.id}.png`,
+      headline: screen.headline,
       size: PORTRAIT_SIZE,
-      signal: options.signal,
-    })
-    const buffer = await finalize(raw, PORTRAIT_TARGET.width, PORTRAIT_TARGET.height)
-    const name = `${screen.id}.png`
-    await writeFile(join(finalDir, name), buffer)
-    return { name, headline: screen.headline, buffer }
+      target: PORTRAIT_TARGET,
+      prompt: portraitPrompt(screen, options.appName, palette),
+      safePrompt: portraitPrompt(screen, options.appName, palette, true),
+      references: portraitImages,
+      safeReferences: [icon],
+    })),
+    {
+      name: '05.png',
+      headline: options.appName,
+      size: BANNER_SIZE,
+      target: BANNER_TARGET,
+      prompt: bannerPrompt(options.appName, palette),
+      safePrompt: bannerPrompt(options.appName, palette, true),
+      references: bannerImages,
+      safeReferences: [icon],
+    },
+  ]
+
+  const settled = await Promise.allSettled(
+    boards.map(async (board) => {
+      report(`生成 ${board.name} · ${board.headline}`)
+      const buffer = await renderBoard(board, options, report)
+      await writeFile(join(finalDir, board.name), buffer)
+      const size = await imageSize(buffer)
+      return { name: board.name, headline: board.headline, ...size, bytes: buffer.byteLength } satisfies GeneratedFile
+    }),
+  )
+
+  const files: GeneratedFile[] = []
+  const failures: BoardFailure[] = []
+  settled.forEach((outcome, index) => {
+    const name = boards[index]?.name ?? `board-${index}`
+    if (outcome.status === 'fulfilled') files.push(outcome.value)
+    else failures.push({ name, message: outcome.reason instanceof Error ? outcome.reason.message : String(outcome.reason) })
   })
 
-  const bannerJob = (async () => {
-    report('生成横图 05')
-    const raw = await generateImage({
-      baseUrl: options.baseUrl,
-      apiKey: options.apiKey,
-      model: options.model,
-      prompt: bannerPrompt(options.appName, palette),
-      references: [iconReference, { mime: 'image/jpeg', data: bannerReference }],
-      size: BANNER_SIZE,
-      signal: options.signal,
-    })
-    const buffer = await finalize(raw, BANNER_TARGET.width, BANNER_TARGET.height)
-    await writeFile(join(finalDir, '05.png'), buffer)
-    return { name: '05.png', headline: options.appName, buffer }
-  })()
-
-  const produced = await Promise.all([...portraitJobs, bannerJob])
-  const files: GeneratedFile[] = []
-  for (const item of produced) {
-    const size = await imageSize(item.buffer)
-    files.push({ name: item.name, headline: item.headline, ...size, bytes: item.buffer.byteLength })
+  if (files.length === 0) {
+    throw settled[0]?.status === 'rejected' ? settled[0].reason : new Error('no image was generated')
   }
 
   const sheet = join(finalDir, 'contact-sheet.png')
@@ -122,11 +188,12 @@ export async function generateStoreShots(options: GenerateOptions): Promise<Gene
         generatedAt: new Date().toISOString(),
         palette,
         files,
+        failures,
       },
       null,
       2,
     )}\n`,
   )
 
-  return { directory, sheet, palette, files }
+  return { directory, sheet, palette, files, failures }
 }

@@ -60,6 +60,12 @@ export const SCREENS: readonly Screen[] = [
 const NEGATIVE =
   'Strictly avoid: Chinese characters or any non-Latin script, gibberish lettering, watermarks, QR codes, App Store or Google Play badges, star ratings, download counters, prices, device brand logos, camera notches, speaker slits, Apple-style home indicators, extra borders, and multi-panel collages.'
 
+const SAFE_CLAUSE =
+  'Everyone is fully clothed in everyday outfits, poses are friendly and non-intimate, nothing suggestive, no nudity, no violence.'
+
+const SAFE_COVER_RULE =
+  'The cover thumbnails show one person at a time, a plain studio or city backdrop, upper body only, calm neutral expression. No couples, no physical contact, no romantic scenes, no swimwear, no text of any kind.'
+
 const COVER_RULE =
   'The short-drama cover thumbnails are frameless cinematic photographs: real faces, moody lighting, no overlay of any kind — no pills, no corner badges, no labels, no episode numbers, no titles, no logos, no watermarks. Phone UI shows icons and flat shapes only: no status bar, no clock, no battery or signal icons, no interface text, no fake numbers.'
 
@@ -73,7 +79,12 @@ const STYLE =
 const IMAGE_ROLES =
   'IMAGE 1 is the app icon: reproduce it exactly as drawn (same shape, fill and glyph), keep it opaque, place it exactly once, never twice, never mirrored, never turn it into an outline, never recolour it to blend into the background, never add text. IMAGE 2 may be a sheet holding four screenshots: borrow only its colour system, typography weight and margin rhythm, never its wording or its layout, and never reproduce the sheet itself.'
 
-export function portraitPrompt(screen: Screen, appName: string, palette: Palette): string {
+export function portraitPrompt(
+  screen: Screen,
+  appName: string,
+  palette: Palette,
+  safe = false,
+): string {
   return [
     STYLE,
     IMAGE_ROLES,
@@ -83,13 +94,14 @@ export function portraitPrompt(screen: Screen, appName: string, palette: Palette
     `Subline, smaller and lighter: "${screen.subline}"`,
     `Background: build the backdrop from ${palette.background} or ${palette.primary}, never plain white.`,
     `Layout: ${screen.layout} Show a generic Android phone with slim bezels and no notch. Keep >=6% margins and a single hero scene filling the frame.`,
-    COVER_RULE,
+    safe ? SAFE_COVER_RULE : COVER_RULE,
+    ...(safe ? [SAFE_CLAUSE] : []),
     NEGATIVE,
     `Output: one full-bleed ${PORTRAIT_TARGET.width}x${PORTRAIT_TARGET.height} image, sharp typography.`,
   ].join('\n\n')
 }
 
-export function bannerPrompt(appName: string, palette: Palette): string {
+export function bannerPrompt(appName: string, palette: Palette, safe = false): string {
   return [
     'Create ONE single wide horizontal Google Play feature graphic, 1024x500, flat modern vector style, matching the screenshot brand system.',
     'IMAGE 1 is the app icon: reproduce it exactly, unchanged. IMAGE 2 is a layout reference only: never copy its wording, colours or composition.',
@@ -100,6 +112,7 @@ export function bannerPrompt(appName: string, palette: Palette): string {
     `Background: gradient from ${palette.background} to ${palette.primary}, never plain white.`,
     'Layout: logo and headline in the left 45%, two overlapping cinematic cover cards in the right 55% — each card filled with a photo, never an empty solid block — >=8% empty margin on every side, headline vertically centred, nothing important in the outer 8%.',
     'The cover cards contain no text at all: no titles, no subtitles, no numbers, no logos.',
+    ...(safe ? [SAFE_CLAUSE] : []),
     NEGATIVE,
     'Output: one 1024x500 image (generated larger, then downscaled).',
   ].join('\n\n')

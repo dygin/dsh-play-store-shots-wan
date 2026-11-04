@@ -109,12 +109,14 @@ export function createHandler(deps: HandlerDeps) {
       const lines = result.files.map(
         (file) => `- ${file.name} ${file.width}×${file.height} · ${file.headline}`,
       )
+      const failed = result.failures.map((failure) => `- ${failure.name} 未生成：${failure.message}`)
       return {
         kind: 'success',
         text: [
-          `已生成 ${result.files.length} 张商店图（${appName}，主色 ${result.palette.primary}）`,
+          `已生成 ${result.files.length}/${result.files.length + result.failures.length} 张商店图（${appName}，主色 ${result.palette.primary}）`,
           `目录：${result.directory}`,
           ...lines,
+          ...failed,
           '联系表：final/contact-sheet.png',
         ].join('\n'),
       }
