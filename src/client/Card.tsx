@@ -1,4 +1,5 @@
 import { useMemo, useState, useSyncExternalStore } from 'react'
+import { Gallery } from './Gallery.tsx'
 import type { CardProps, FieldKey } from './types.ts'
 
 interface FieldSpec {
@@ -59,6 +60,7 @@ export function Card({ form, t }: CardProps) {
 
   return (
     <section className="pss-card">
+      <Gallery t={t} />
       <div className="pss-head">
         <h3 className="pss-title">{t('title')}</h3>
         <p className="pss-sub">{t('subtitle')}</p>

@@ -60,4 +60,5 @@ export function apply(ctx: ClientContext): void {
       ),
     'play-store-shots: settings card',
   )
+
 }

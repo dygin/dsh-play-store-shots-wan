@@ -3,6 +3,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { Settings } from './config.ts'
 import { generateStoreShots } from './pipeline.ts'
+import { rememberRun } from './server.ts'
 import { WanError } from './wan.ts'
 
 export type CommandOutcome = { kind: 'success'; text: string } | { kind: 'error'; text: string }
@@ -105,6 +106,12 @@ export function createHandler(deps: HandlerDeps) {
         signal: invocation.signal,
       })
 
+      rememberRun({
+        appName,
+        directory: result.directory,
+        generatedAt: new Date().toISOString(),
+        files: result.files,
+      })
       await trace(`done in ${Date.now() - started}ms files=${result.files.length} dir=${result.directory}`)
       const lines = result.files.map(
         (file) => `- ${file.name} ${file.width}×${file.height} · ${file.headline}`,

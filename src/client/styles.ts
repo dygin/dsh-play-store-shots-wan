@@ -53,6 +53,26 @@ const CSS = `
 .pss-primary:disabled { color: var(--dsw-alias-label-tertiary); background: var(--dsw-alias-bg-layer-2); }
 .pss-status { font-size: 12px; color: var(--dsw-alias-label-tertiary); }
 .pss-error { color: var(--dsw-alias-state-warn-label); }
+.pss-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-3);
+  color: var(--dsw-alias-label-primary);
+}
+.pss-gallery-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pss-gallery-title { font-size: 12px; font-weight: 600; color: var(--dsw-alias-label-primary); }
+.pss-gallery-close { border: 0; background: none; color: var(--dsw-alias-label-tertiary); font-size: 16px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.pss-gallery-close:hover { color: var(--dsw-alias-label-primary); }
+.pss-gallery-list { display: flex; gap: 12px; margin: 0; padding: 0; list-style: none; overflow-x: auto; }
+.pss-gallery-item { display: flex; flex-direction: column; gap: 4px; flex: 0 0 auto; width: 96px; }
+.pss-gallery-thumb { width: 96px; height: 170px; object-fit: cover; border-radius: 8px; border: 1px solid var(--dsw-alias-border-l2); background: var(--dsw-alias-bg-layer-1); display: block; }
+.pss-gallery-item:nth-child(5) .pss-gallery-thumb { height: 47px; margin-top: 61px; }
+.pss-gallery-caption { font-size: 11px; line-height: 1.3; color: var(--dsw-alias-label-secondary); }
+.pss-gallery-meta { font-size: 10px; color: var(--dsw-alias-label-tertiary); }
 `
 
 let installed = false

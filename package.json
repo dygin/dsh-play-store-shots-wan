@@ -1,6 +1,6 @@
 {
   "name": "dsh-play-store-shots-wan",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Google Play store screenshot generator for DeepSeek Harness — /playstoreshots turns an app logo plus two reference sheets into four 1080x1920 screenshots and one 1024x500 feature graphic via Bailian wan2.7-image-pro.",
   "license": "MIT",
   "type": "module",

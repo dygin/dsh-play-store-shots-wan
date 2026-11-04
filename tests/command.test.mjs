@@ -15,6 +15,7 @@ function register(settings = {}) {
       readImage: async () => ({ data: new Uint8Array([1, 2, 3]) }),
     },
     effect: (execute) => execute(),
+    get: () => undefined,
   }
   const config = {
     apiKey: { get: () => settings.apiKey ?? 'sk-test' },

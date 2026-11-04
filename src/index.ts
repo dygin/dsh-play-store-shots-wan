@@ -1,5 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { createHandler, type Invocation } from './command.ts'
+import { mountRoutes, trace } from './server.ts'
 import { Config, readSettings, type ConfigInput } from './config.ts'
 
 export const name = 'play-store-shots'
@@ -31,6 +32,7 @@ interface HostContext {
   commands: CommandRegistry
   attachments: AttachmentStore
   effect(execute: () => (() => void) | void, label?: string): void
+  inject?(names: string[], execute: (scope: unknown) => void): void
 }
 
 export function apply(ctx: Context, config: ConfigInput): void {
@@ -39,6 +41,13 @@ export function apply(ctx: Context, config: ConfigInput): void {
   const handler = createHandler({
     settings: () => readSettings(config),
     readImage: (reference, signal) => host.attachments.readImage(reference, signal),
+  })
+
+  // `webServer` may be provided after this plugin applies, so the routes mount
+  // from a scoped injection instead of a one-shot lookup.
+  host.inject?.(['webServer'], (scope) => {
+    const scoped = scope as { webServer?: never; effect: HostContext['effect'] }
+    mountRoutes({ webServer: scoped.webServer, effect: (execute, label) => scoped.effect(execute, label) })
   })
 
   host.effect(

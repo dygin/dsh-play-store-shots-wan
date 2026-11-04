@@ -18,6 +18,8 @@ export const zh = {
   loading: '读取配置…',
   unavailable: '当前部署未启用该插件',
   readOnly: '配置只读',
+  galleryTitle: '本次生成',
+  galleryClose: '关闭预览',
 }
 
 export const en = {
@@ -38,4 +40,6 @@ export const en = {
   loading: 'Loading configuration…',
   unavailable: 'This deployment does not enable the plugin',
   readOnly: 'Configuration is read-only',
+  galleryTitle: 'Latest run',
+  galleryClose: 'Dismiss preview',
 }
