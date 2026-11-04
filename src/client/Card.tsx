@@ -6,6 +6,7 @@ interface FieldSpec {
   label: string
   hint: string
   type?: 'password' | 'text'
+  placeholder?: string
 }
 
 /**
@@ -14,7 +15,7 @@ interface FieldSpec {
  */
 function fields(t: CardProps['t']): FieldSpec[] {
   return [
-    { key: 'apiKey', label: t('apiKey'), hint: t('apiKeyHint'), type: 'password' },
+    { key: 'apiKey', label: t('apiKey'), hint: t('apiKeyHint'), type: 'password', placeholder: 'sk-…' },
     { key: 'baseUrl', label: t('baseUrl'), hint: t('baseUrlHint') },
     { key: 'model', label: t('model'), hint: '' },
     { key: 'outputDir', label: t('outputDir'), hint: t('outputDirHint') },
@@ -73,6 +74,7 @@ export function Card({ form, t }: CardProps) {
               type={spec.type ?? 'text'}
               value={valueOf(spec.key)}
               disabled={!editable}
+              placeholder={spec.placeholder}
               autoComplete="off"
               spellCheck={false}
               onChange={(event) => setDraft((current) => ({ ...current, [spec.key]: event.target.value }))}
