@@ -1,0 +1,41 @@
+export const NS = 'play-store-shots'
+
+export const zh = {
+  title: 'Google Play 商店图',
+  subtitle: '通过 /playstoreshots 生成 4 张 1080×1920 竖图与 1 张 1024×500 横图',
+  usage: '用法：/playstoreshots 应用名称，并附上 3 张图片（logo、竖图参考、横图参考）',
+  apiKey: '百炼 API Key',
+  apiKeyHint: '留空则读取环境变量 WAN_API_KEY',
+  baseUrl: '网关地址',
+  baseUrlHint: '专属网关，末尾不带 /api/v1',
+  model: '模型',
+  outputDir: '输出目录',
+  outputDirHint: '相对路径基于会话工作目录',
+  save: '保存',
+  reset: '恢复默认',
+  saved: '已保存',
+  failed: '保存失败',
+  loading: '读取配置…',
+  unavailable: '当前部署未启用该插件',
+  readOnly: '配置只读',
+}
+
+export const en = {
+  title: 'Google Play Screenshots',
+  subtitle: 'Use /playstoreshots to generate four 1080×1920 screenshots and one 1024×500 feature graphic',
+  usage: 'Usage: /playstoreshots <app name> with three images attached (logo, portrait reference, banner reference)',
+  apiKey: 'Bailian API key',
+  apiKeyHint: 'Empty falls back to the WAN_API_KEY environment variable',
+  baseUrl: 'Gateway URL',
+  baseUrlHint: 'Dedicated gateway, without a trailing /api/v1',
+  model: 'Model',
+  outputDir: 'Output directory',
+  outputDirHint: 'Relative paths resolve against the session working directory',
+  save: 'Save',
+  reset: 'Reset',
+  saved: 'Saved',
+  failed: 'Save failed',
+  loading: 'Loading configuration…',
+  unavailable: 'This deployment does not enable the plugin',
+  readOnly: 'Configuration is read-only',
+}

@@ -1,0 +1,5 @@
+# Mounts the screenshot generator into the Web profile. The row id doubles as the
+# settings namespace the configuration card reads and writes.
+- insert:
+    - id: play-store-shots
+      name: dsh-play-store-shots-wan
