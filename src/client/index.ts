@@ -5,7 +5,8 @@ import type { ConfigForm } from './types.ts'
 
 /** Profile entry id; doubles as the settings namespace the card binds to. */
 const ENTRY_ID = 'play-store-shots'
-const SLOT = 'plugins.item'
+const BUNDLE_SLOT = 'plugins.bundle.config'
+const BUNDLE_ID = 'dsh-play-store-shots-wan'
 
 interface LocaleService {
   register(namespace: string, dictionaries: Record<string, Record<string, string>>): () => void
@@ -39,18 +40,17 @@ export function apply(ctx: ClientContext): void {
 
   const form = ctx.configForms.get<ConfigForm>(ENTRY_ID)
 
-  // whileServed keeps the card registered only while the Host actually serves
-  // this entry's namespace, so removing the plugin leaves no dead card behind.
+  // The card belongs to the package's own page under "Installed plugins" rather
+  // than the settings list: `plugins.bundle.config` is keyed by bundle name and
+  // rendered only while the Host serves this entry's namespace.
   ctx.effect(
     () =>
       ctx.configForms.whileServed([ENTRY_ID], () =>
-        ctx.slots.inject(SLOT, () =>
+        ctx.slots.inject(BUNDLE_SLOT, () =>
           ctx.slots.register(
             {
-              name: SLOT,
-              id: ENTRY_ID,
-              order: 60,
-              label: () => t('title'),
+              name: BUNDLE_SLOT,
+              key: BUNDLE_ID,
               locale: NS,
               inject: () => ({ form, t }),
             },
