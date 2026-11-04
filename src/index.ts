@@ -3,7 +3,7 @@ import { createHandler, type Invocation } from './command.ts'
 import { Config, readSettings, type ConfigInput } from './config.ts'
 
 export const name = 'play-store-shots'
-export const inject = ['commands']
+export const inject = ['commands', 'attachments']
 export { Config }
 export { createHandler } from './command.ts'
 export { generateStoreShots } from './pipeline.ts'
